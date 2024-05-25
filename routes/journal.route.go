@@ -1,11 +1,15 @@
 package routes
 
 import (
-    "journal/controllers"
-    "github.com/gin-gonic/gin"
+	"journal/controllers"
+	"journal/middleware"
+
+	"github.com/gin-gonic/gin"
 )
 
 func JournalRoutes(router *gin.Engine) {
+    router.Use(middleware.Auth)
+    
     journalGroup := router.Group("/journals")
     {
         journalGroup.GET("/:id", controllers.GetJournals)

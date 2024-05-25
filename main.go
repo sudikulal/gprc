@@ -10,6 +10,7 @@ func main() {
     router := gin.Default()
 
     routes.UserRoutes(router)
-    
+    routes.JournalRoutes(router)
+
     router.Run(":8080")
 }
