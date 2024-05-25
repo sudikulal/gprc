@@ -3,121 +3,110 @@ package controllers
 import (
 	"journal/config"
 	"journal/models"
+	"journal/utils"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"golang.org/x/crypto/bcrypt"
 )
 
 func UserRegister(c *gin.Context) {
 	var user models.UserSchema
-	var err error
-	if err := c.ShouldBindJSON(&user); err != nil {
+
+	if err := c.ShouldBind(&user); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
 	emailId, password, userName, registerType := user.EmailId, user.Password, user.UserName, user.RegisterType
 
-	var foundUser models.UserSchema
-
-	switch registerType {
-	case config.REGISTER_TYPE["EMAIL"]:
-		{
-			if emailId == "" || password == "" {
-				c.JSON(http.StatusBadRequest, gin.H{"message": "emailId/password is empty"})
-				return
-			}
-
-			err = models.UserModel.FindOne(c, bson.M{"email_id": emailId}).Decode(&foundUser)
-
-			if foundUser.UserName != "" {
-				c.JSON(http.StatusBadRequest, gin.H{"message": "userName is already exist"})
-				return
-			}
-		}
-	case config.REGISTER_TYPE["USER_NAME"]:
-		{
-			if userName == "" || password == "" {
-				c.JSON(http.StatusBadRequest, gin.H{"message": "userName/password is empty"})
-				return
-			}
-
-			err = models.UserModel.FindOne(c, bson.M{"user_name": userName}).Decode(&foundUser)
-
-			if foundUser.UserName != "" {
-				c.JSON(http.StatusBadRequest, gin.H{"message": "userName is already exist"})
-				return
-			}
-		}
-
-	default:
-		{
-			c.JSON(http.StatusBadRequest, gin.H{"message": "invalid register type"})
-			return
-		}
-
+	if (registerType == config.REGISTER_TYPE["EMAIL"] && (emailId == "" || password == "")) ||
+		(registerType == config.REGISTER_TYPE["USER_NAME"] && (userName == "" || password == "")) {
+		c.JSON(http.StatusBadRequest, gin.H{"message": "Required fields are empty"})
+		return
 	}
 
-	if err != nil {
+	filter := bson.M{}
+	if registerType == config.REGISTER_TYPE["EMAIL"] {
+		filter["email_id"] = emailId
+	} else if registerType == config.REGISTER_TYPE["USER_NAME"] {
+		filter["user_name"] = userName
+	} else {
+		c.JSON(http.StatusBadRequest, gin.H{"message": "Invalid register type"})
+		return
+	}
+
+	var foundUser models.UserSchema
+	if err := models.UserModel.FindOne(c, filter).Decode(&foundUser); err == nil {
+		c.JSON(http.StatusBadRequest, gin.H{"message": "User already exists"})
+		return
+	} else if err != mongo.ErrNoDocuments {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
+
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Password encryption failed"})
+		return
+	}
+	user.Password = string(hashedPassword)
 
 	createUser, err := models.UserModel.InsertOne(c, user)
-
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	c.JSON(http.StatusCreated, createUser)
+	objectID := createUser.InsertedID.(primitive.ObjectID).Hex()
+
+	userObj := map[string]interface{}{
+		"userId": objectID,
+	}
+
+	token, err := utils.CreateJwtToken(userObj, nil)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusCreated, gin.H{
+		"name":        user.UserName,
+		"user_id":     objectID,
+		"accessToken": token,
+	})
 }
 
 func UserLogin(c *gin.Context) {
 	var user models.UserSchema
-	var err error
-	if err := c.ShouldBindJSON(&user); err != nil {
+	if err := c.ShouldBind(&user); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
 	emailId, password, userName, registerType := user.EmailId, user.Password, user.UserName, user.RegisterType
 
-	var foundUser models.UserSchema
-
-	switch registerType {
-	case config.REGISTER_TYPE["EMAIL"]:
-		{
-			if emailId == "" || password == "" {
-				c.JSON(http.StatusBadRequest, gin.H{"message": "Email/password is empty"})
-				return
-			}
-
-			err = models.UserModel.FindOne(c, bson.M{"email_id": emailId}).Decode(&foundUser)
-
-		}
-	case config.REGISTER_TYPE["USER_NAME"]:
-		{
-			if userName == "" || password == "" {
-				c.JSON(http.StatusBadRequest, gin.H{"message": "userName/password is empty"})
-				return
-			}
-
-			err = models.UserModel.FindOne(c, bson.M{"user_name": userName}).Decode(&foundUser)
-		}
-
-	default:
-		{
-			c.JSON(http.StatusBadRequest, gin.H{"message": "invalid register type"})
-			return
-		}
-
+	if (registerType == config.REGISTER_TYPE["EMAIL"] && (emailId == "" || password == "")) ||
+		(registerType == config.REGISTER_TYPE["USER_NAME"] && (userName == "" || password == "")) {
+		c.JSON(http.StatusBadRequest, gin.H{"message": "Required fields are empty"})
+		return
 	}
 
-	if err == mongo.ErrNoDocuments {
+	filter := bson.M{}
+	if registerType == config.REGISTER_TYPE["EMAIL"] {
+		filter["email_id"] = emailId
+	} else if registerType == config.REGISTER_TYPE["USER_NAME"] {
+		filter["user_name"] = userName
+	} else {
+		c.JSON(http.StatusBadRequest, gin.H{"message": "Invalid register type"})
+		return
+	}
+
+	var foundUser models.UserSchema
+	if err := models.UserModel.FindOne(c, filter).Decode(&foundUser); err == mongo.ErrNoDocuments {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid email or password"})
 		return
 	} else if err != nil {
@@ -130,7 +119,23 @@ func UserLogin(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": "Login successful", "user": foundUser})
+	objectID := (foundUser.ID).Hex()
+
+	userObj := map[string]interface{}{
+		"userId": objectID,
+	}
+
+	token, err := utils.CreateJwtToken(userObj, nil)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"name":        user.UserName,
+		"user_id":     objectID,
+		"accessToken": token,
+	})
 }
 
 func UserLogout(c *gin.Context) {
