@@ -10,10 +10,6 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-func GetJournals(c *gin.Context) {
-	c.JSON(http.StatusOK, gin.H{"hello": "world"})
-}
-
 func GetJournalsList(c *gin.Context) {
 	userId := c.GetHeader("userId")
 	if userId == "" {
@@ -21,14 +17,23 @@ func GetJournalsList(c *gin.Context) {
 		return
 	}
 
+	folderId := c.Query("folder_id")
+
+	findQuery := bson.M{"user_id": userId}
+
+	if folderId != "" {
+		findQuery["folder_id"] = folderId
+	}
+
 	findOptions := options.Find().SetProjection(bson.M{
 		"_id":        1,
 		"title":      1,
 		"folder_id":  1,
+		"day_rating": 1,
 		"created_at": 1,
 	})
 
-	journalList, err := models.JournalModel.Find(c, bson.M{"user_id": userId}, findOptions)
+	journalList, err := models.JournalModel.Find(c, findQuery, findOptions)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"message": "failed to retrieve journals"})
 		return
@@ -39,7 +44,7 @@ func GetJournalsList(c *gin.Context) {
 
 func GetJournalsDetail(c *gin.Context) {
 	var journal *models.JournalSchema
-	
+
 	userId := c.GetHeader("userId")
 
 	if userId == "" {
