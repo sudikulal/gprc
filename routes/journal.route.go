@@ -12,7 +12,8 @@ func JournalRoutes(router *gin.Engine) {
     
     journalGroup := router.Group("/journals")
     {
-        journalGroup.GET("/:id", controllers.GetJournals)
+        journalGroup.GET("/", controllers.GetJournalsList)
+        journalGroup.GET("/:id", controllers.GetJournalsDetail)
         journalGroup.POST("/", controllers.CreateJournal)
         journalGroup.PUT("/:id", controllers.UpdateJournal)
         journalGroup.DELETE("/:id", controllers.DeleteJournal)
