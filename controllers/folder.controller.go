@@ -6,6 +6,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo"
 )
 
 func GetFoldersList(c *gin.Context) {
@@ -77,16 +78,30 @@ func UpdateFolder(c *gin.Context) {
 		return
 	}
 
-	updateData, err := models.FolderModel.UpdateOne(c, bson.M{"_id": folderId, "user_id": userId}, bson.M{"folder_name": folder.FolderName})
+	result, err := models.FolderModel.UpdateOne(c, bson.M{"_id": folderId, "user_id": userId}, bson.M{"folder_name": folder.FolderName})
 
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"message": "update failed"})
 	}
 
-	c.JSON(http.StatusOK, gin.H{"update": updateData})
+	c.JSON(http.StatusOK, gin.H{"result": result})
 
 }
 
 func DeleteFolder(c *gin.Context) {
+	userId := c.GetHeader("userId")
+	if userId == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"message": "invalid user"})
+		return
+	}
 
+	folderId := c.Param("id")
+
+	result,err := models.FolderModel.DeleteOne(c,bson.M{"_id":folderId,"user_id":userId})
+
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"message": "delete failed"})
+	}
+
+	c.JSON(http.StatusOK, gin.H{"result": result})
 }
