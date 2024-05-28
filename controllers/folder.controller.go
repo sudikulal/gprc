@@ -60,8 +60,33 @@ func CreateFolder(c *gin.Context) {
 }
 
 func UpdateFolder(c *gin.Context) {
+	userId := c.GetHeader("userId")
+	if userId == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"message": "invalid user"})
+		return
+	}
+
+	folderId := c.Param("id")
+
+	var folder *models.FolderSchema
+
+	c.ShouldBind(&folder)
+
+	if folder.FolderName == "" {
+		c.JSON(http.StatusOK, gin.H{"message": "folder name is empty"})
+		return
+	}
+
+	updateData, err := models.FolderModel.UpdateOne(c, bson.M{"_id": folderId, "user_id": userId}, bson.M{"folder_name": folder.FolderName})
+
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"message": "update failed"})
+	}
+
+	c.JSON(http.StatusOK, gin.H{"update": updateData})
 
 }
+
 func DeleteFolder(c *gin.Context) {
 
 }
