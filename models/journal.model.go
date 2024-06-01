@@ -17,7 +17,7 @@ type JournalSchema struct {
 	FolderID         primitive.ObjectID `bson:"folder_id" json:"folderId" form:"folderId"`
 	Title            string             `bson:"title" json:"title" form:"title"`
 	DayRating        int                `bson:"day_rating" json:"dayRating" form:"dayRating"`
-	EncryptedContent string             `bson:"encrypted_content" json:"encryptedContent" form:"encryptedContent"`
+	Content string             			`bson:"content" json:"Content" form:"content"`
 	CreatedAt        time.Time          `bson:"created_at" json:"createdAt" form:"createdAt"`
 }
 

@@ -2,10 +2,12 @@ package controllers
 
 import (
 	"journal/models"
+	"journal/utils"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
@@ -71,8 +73,47 @@ func GetJournalsDetail(c *gin.Context) {
 }
 
 func CreateJournal(c *gin.Context) {
+	var journalData models.JournalSchema
+	
+	if err := c.ShouldBind(&journalData); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
 
+	if journalData.FolderID == primitive.NilObjectID {
+		c.JSON(http.StatusBadRequest, gin.H{"message":"folder id cannot be empty"})
+		return
+	}else{
+		var folderData models.FolderSchema 
+		if err := models.FolderModel.FindOne(c,bson.M{"_id":journalData.FolderID}).Decode(&folderData); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error":err.Error()})
+			return
+		}
+		if folderData.ID == primitive.NilObjectID  {
+			c.JSON(http.StatusBadRequest, gin.H{"message":"invalid folder id"})
+			return
+		} 
+	}
+
+	encryptedData,err := utils.Encrypt(journalData.Content)
+
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"message":"error while processing content"})
+		return
+	}else{
+		journalData.Content = encryptedData
+	}
+
+	result,err := models.JournalModel.InsertOne(c,journalData)
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error":err.Error()})
+			return
+	}
+
+	c.JSON(http.StatusOK,gin.H{"result":result})
 }
+
 func UpdateJournal(c *gin.Context) {
 
 }
