@@ -13,15 +13,15 @@ import (
 )
 
 func GetJournalsList(c *gin.Context) {
-	userId := c.GetHeader("userId")
-	if userId == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"message": "invalid user"})
+	userObj, err := utils.GetUserFromContext(c)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"message": err.Error()})
 		return
 	}
 
 	folderId := c.Query("folder_id")
 
-	findQuery := bson.M{"user_id": userId}
+	findQuery := bson.M{"user_id": userObj.UserId}
 
 	if folderId != "" {
 		findQuery["folder_id"] = folderId
@@ -47,20 +47,20 @@ func GetJournalsList(c *gin.Context) {
 func GetJournalsDetail(c *gin.Context) {
 	var journal *models.JournalSchema
 
-	userId := c.GetHeader("userId")
-
-	if userId == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"message": "invalid user"})
+	userObj, err := utils.GetUserFromContext(c)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"message": err.Error()})
 		return
 	}
 
-	journalId := c.Param("id")
-	if journalId == "" {
+	journalId := utils.GetIdFromParam(c)
+
+	if journalId == primitive.NilObjectID {
 		c.JSON(http.StatusBadRequest, gin.H{"message": "invalid id"})
 		return
 	}
 
-	if err := models.JournalModel.FindOne(c, bson.M{"user_id": userId, "journal_id": journalId}).Decode(&journal); err != nil {
+	if err := models.JournalModel.FindOne(c, bson.M{"user_id": userObj.UserId, "_id": journalId}).Decode(&journal); err != nil {
 		if err == mongo.ErrNoDocuments {
 			c.JSON(http.StatusNotFound, gin.H{"message": "journal not found"})
 		} else {
@@ -75,10 +75,9 @@ func GetJournalsDetail(c *gin.Context) {
 func CreateJournal(c *gin.Context) {
 	var journalData models.JournalSchema
 
-	userId, err := primitive.ObjectIDFromHex(c.GetHeader("userId"))
-
-	if userId == primitive.NilObjectID || err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"message": "invalid user"})
+	userObj, err := utils.GetUserFromContext(c)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"message": err.Error()})
 		return
 	}
 
@@ -87,17 +86,25 @@ func CreateJournal(c *gin.Context) {
 		return
 	}
 
-	journalData.UserID = userId
+	journalData.UserID = userObj.UserId
 
-	if journalData.FolderID == primitive.NilObjectID {
+	if journalData.FolderID == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"message": "folder id cannot be empty"})
 		return
 	} else {
 		var folderData models.FolderSchema
-		if err := models.FolderModel.FindOne(c, bson.M{"_id": journalData.FolderID}).Decode(&folderData); err != nil {
+
+		folderID, err := primitive.ObjectIDFromHex(journalData.FolderID)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"message": "invalid folder ID format"})
+			return
+		}
+
+		if err := models.FolderModel.FindOne(c, bson.M{"_id": folderID}).Decode(&folderData); err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
+
 		if folderData.ID == primitive.NilObjectID {
 			c.JSON(http.StatusBadRequest, gin.H{"message": "invalid folder id"})
 			return
@@ -120,7 +127,7 @@ func CreateJournal(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"result": result})
+	c.JSON(http.StatusOK,result)
 }
 
 func UpdateJournal(c *gin.Context) {
@@ -158,7 +165,7 @@ func DeleteJournal(c *gin.Context) {
 		return
 	}
 
-	journalId:= c.Param("id")
+	journalId := c.Param("id")
 
 	result, err := models.FolderModel.DeleteOne(c, bson.M{"_id": journalId, "user_id": userId})
 

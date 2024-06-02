@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"journal/models"
+	"journal/utils"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -10,26 +11,26 @@ import (
 )
 
 func GetFoldersList(c *gin.Context) {
-	userId := c.GetHeader("userId")
-	if userId == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"message": "invalid user"})
+	userObj, err := utils.GetUserFromContext(c)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"message": err.Error()})
 		return
 	}
 
-	folderList, err := models.JournalModel.Find(c, bson.M{"user_id": userId})
+	folderList, err := models.FolderModel.Find(c, bson.M{"user_id": userObj.UserId})
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"message": "failed to retrieve folders"})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"journalList": folderList})
+	c.JSON(http.StatusOK, gin.H{"journalList": folderList.Current})
 }
 
 func CreateFolder(c *gin.Context) {
-	userId := c.GetHeader("userId")
-	if userId == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"message": "invalid user"})
+	userObj, err := utils.GetUserFromContext(c)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"message": err.Error()})
 		return
 	}
 
@@ -40,8 +41,15 @@ func CreateFolder(c *gin.Context) {
 		return
 	}
 
+	if folder.FolderName == "" {
+		c.JSON(http.StatusOK, gin.H{"message": "folder name is empty"})
+		return
+	}
+
+	folder.UserID = userObj.UserId
+
 	var folderExist models.FolderSchema
-	if err := models.FolderModel.FindOne(c, bson.M{"folder_name": folder.FolderName, "user_id": userId}).Decode(&folderExist); err == nil {
+	if err := models.FolderModel.FindOne(c, bson.M{"folder_name": folder.FolderName, "user_id": userObj.UserId}).Decode(&folderExist); err == nil {
 		c.JSON(http.StatusBadRequest, gin.H{"message": "Folder already exists"})
 		return
 	} else if err != mongo.ErrNoDocuments {
@@ -56,18 +64,19 @@ func CreateFolder(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusCreated, gin.H{"folder": createFolder})
+	c.JSON(http.StatusCreated, createFolder)
 
 }
 
 func UpdateFolder(c *gin.Context) {
-	userId := c.GetHeader("userId")
-	if userId == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"message": "invalid user"})
+	userObj, err := utils.GetUserFromContext(c)
+
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"message": err.Error()})
 		return
 	}
 
-	folderId := c.Param("id")
+	folderId := utils.GetIdFromParam(c)
 
 	var folder *models.FolderSchema
 
@@ -78,10 +87,11 @@ func UpdateFolder(c *gin.Context) {
 		return
 	}
 
-	result, err := models.FolderModel.UpdateOne(c, bson.M{"_id": folderId, "user_id": userId}, bson.M{"folder_name": folder.FolderName})
+	result, err := models.FolderModel.UpdateOne(c, bson.M{"_id": folderId, "user_id": userObj.UserId}, bson.M{"$set": bson.M{"folder_name": folder.FolderName}})
 
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"message": "update failed"})
+		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{"result": result})
@@ -97,7 +107,7 @@ func DeleteFolder(c *gin.Context) {
 
 	folderId := c.Param("id")
 
-	result,err := models.FolderModel.DeleteOne(c,bson.M{"_id":folderId,"user_id":userId})
+	result, err := models.FolderModel.DeleteOne(c, bson.M{"_id": folderId, "user_id": userId})
 
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"message": "delete failed"})

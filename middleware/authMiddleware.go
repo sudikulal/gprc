@@ -15,14 +15,14 @@ func Auth(c *gin.Context) {
 			return
 		}
 
-		userId, err := utils.DecodeToken(accessToken)
+		userObj, err := utils.DecodeToken(accessToken)
 		if err != nil {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
 			c.Abort()
 			return
 		}
 
-		c.Set("userId", userId)
+		c.Set("userObj", userObj)
 
 		c.Next()
 	}
