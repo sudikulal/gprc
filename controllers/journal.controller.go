@@ -74,44 +74,53 @@ func GetJournalsDetail(c *gin.Context) {
 
 func CreateJournal(c *gin.Context) {
 	var journalData models.JournalSchema
-	
+
+	userId, err := primitive.ObjectIDFromHex(c.GetHeader("userId"))
+
+	if userId == primitive.NilObjectID || err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"message": "invalid user"})
+		return
+	}
+
 	if err := c.ShouldBind(&journalData); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
+	journalData.UserID = userId
+
 	if journalData.FolderID == primitive.NilObjectID {
-		c.JSON(http.StatusBadRequest, gin.H{"message":"folder id cannot be empty"})
+		c.JSON(http.StatusBadRequest, gin.H{"message": "folder id cannot be empty"})
 		return
-	}else{
-		var folderData models.FolderSchema 
-		if err := models.FolderModel.FindOne(c,bson.M{"_id":journalData.FolderID}).Decode(&folderData); err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error":err.Error()})
+	} else {
+		var folderData models.FolderSchema
+		if err := models.FolderModel.FindOne(c, bson.M{"_id": journalData.FolderID}).Decode(&folderData); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
-		if folderData.ID == primitive.NilObjectID  {
-			c.JSON(http.StatusBadRequest, gin.H{"message":"invalid folder id"})
+		if folderData.ID == primitive.NilObjectID {
+			c.JSON(http.StatusBadRequest, gin.H{"message": "invalid folder id"})
 			return
-		} 
+		}
 	}
 
-	encryptedData,err := utils.Encrypt(journalData.Content)
+	encryptedData, err := utils.Encrypt(journalData.Content)
 
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"message":"error while processing content"})
+		c.JSON(http.StatusBadRequest, gin.H{"message": "error while processing content"})
 		return
-	}else{
+	} else {
 		journalData.Content = encryptedData
 	}
 
-	result,err := models.JournalModel.InsertOne(c,journalData)
+	result, err := models.JournalModel.InsertOne(c, journalData)
 
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error":err.Error()})
-			return
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
 	}
 
-	c.JSON(http.StatusOK,gin.H{"result":result})
+	c.JSON(http.StatusOK, gin.H{"result": result})
 }
 
 func UpdateJournal(c *gin.Context) {
