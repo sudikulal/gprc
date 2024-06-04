@@ -12,7 +12,7 @@ import (
 )
 
 type FolderSchema struct {
-	ID         primitive.ObjectID `bson:"_id" json:"folderId" form:"folderId"`
+	ID         primitive.ObjectID `bson:"_id,omitempty" json:"folderId" form:"folderId"`
 	UserID     primitive.ObjectID `bson:"user_id" json:"userId" form:"userId"`
 	FolderName string             `bson:"folder_name" json:"folderName"  form:"folderName"`
 	CreatedAt  time.Time          `bson:"created_at" json:"createdAt" form:"createdAt"`
