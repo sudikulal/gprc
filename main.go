@@ -11,6 +11,7 @@ func main() {
 
     routes.UserRoutes(router)
     routes.JournalRoutes(router)
+    routes.FolderRoutes(router)
 
     router.Run(":8080")
 }
