@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"context"
 	"journal/models"
 	"journal/utils"
 	"net/http"
@@ -35,10 +36,21 @@ func GetJournalsList(c *gin.Context) {
 		"created_at": 1,
 	})
 
-	journalList, err := models.JournalModel.Find(c, findQuery, findOptions)
+	cursor, err := models.JournalModel.Find(c, findQuery, findOptions)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"message": "failed to retrieve journals"})
 		return
+	}
+	defer cursor.Close(context.Background())
+
+	var journalList []models.JournalSchema
+	for cursor.Next(context.Background()) {
+		var journal models.JournalSchema
+		if err = cursor.Decode(&journal); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"message": "failed to decode journal"})
+			return
+		}
+		journalList = append(journalList, journal)
 	}
 
 	c.JSON(http.StatusOK, gin.H{"journalList": journalList})
@@ -68,6 +80,15 @@ func GetJournalsDetail(c *gin.Context) {
 		}
 		return
 	}
+
+	decryptedData, err := utils.Decrypt(journal.Content)
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "failed to decrypt journal"})
+		return
+	}
+
+	journal.Content = decryptedData
 
 	c.JSON(http.StatusOK, gin.H{"journalDetail": journal})
 }

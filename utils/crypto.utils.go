@@ -31,7 +31,7 @@ func Encrypt(plainText string) (string, error) {
 	return hex.EncodeToString(cipherText), nil
 }
 
-func Decrypt(cipherText, key string) (string, error) {
+func Decrypt(cipherText string) (string, error) {
 	block, err := aes.NewCipher([]byte(config.ENCRYPTION_KEY))
 	if err != nil {
 		return "", err
