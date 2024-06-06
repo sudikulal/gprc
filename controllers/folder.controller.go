@@ -1,13 +1,16 @@
 package controllers
 
 import (
+	"context"
+	"net/http"
+
 	"journal/models"
 	"journal/utils"
-	"net/http"
 
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 func GetFoldersList(c *gin.Context) {
@@ -17,15 +20,31 @@ func GetFoldersList(c *gin.Context) {
 		return
 	}
 
-	folderList, err := models.FolderModel.Find(c, bson.M{"user_id": userObj.UserId})
-
+	cursor, err := models.FolderModel.Find(c, bson.M{"user_id": userObj.UserId}, options.Find())
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"message": "failed to retrieve folders"})
 		return
 	}
+	defer cursor.Close(context.Background())
 
-	c.JSON(http.StatusOK, gin.H{"journalList": folderList.Current})
+	var folderList []models.FolderSchema
+	for cursor.Next(context.Background()) {
+		var folder models.FolderSchema
+		if err = cursor.Decode(&folder); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"message": "failed to decode folder"})
+			return
+		}
+		folderList = append(folderList, folder)
+	}
+
+	if err = cursor.Err(); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "cursor error"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"journalList": folderList})
 }
+
 
 func CreateFolder(c *gin.Context) {
 	userObj, err := utils.GetUserFromContext(c)
