@@ -5,6 +5,7 @@ import (
 	"journal/models"
 	"journal/utils"
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/bson"
@@ -140,6 +141,8 @@ func CreateJournal(c *gin.Context) {
 	} else {
 		journalData.Content = encryptedData
 	}
+
+	journalData.CreatedAt = time.Now()
 
 	result, err := models.JournalModel.InsertOne(c, journalData)
 

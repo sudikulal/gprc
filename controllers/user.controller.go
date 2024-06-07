@@ -5,6 +5,7 @@ import (
 	"journal/models"
 	"journal/utils"
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/bson"
@@ -54,7 +55,8 @@ func UserRegister(c *gin.Context) {
 		return
 	}
 	user.Password = string(hashedPassword)
-
+	user.CreatedAt = time.Now()
+	
 	createUser, err := models.UserModel.InsertOne(c, user)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})

@@ -3,6 +3,7 @@ package controllers
 import (
 	"context"
 	"net/http"
+	"time"
 
 	"journal/models"
 	"journal/utils"
@@ -75,6 +76,8 @@ func CreateFolder(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
+
+	folder.CreatedAt = time.Now()
 
 	createFolder, err := models.FolderModel.InsertOne(c, folder)
 
