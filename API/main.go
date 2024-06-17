@@ -13,5 +13,5 @@ func main() {
     routes.JournalRoutes(router)
     routes.FolderRoutes(router)
 
-    router.Run(":8080")
+    router.Run(":3232")
 }
