@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Cookies from 'js-cookie';
 
 export default function SignIn() {
   const [identifier, setIdentifier] = useState<string>('');
@@ -37,7 +38,9 @@ export default function SignIn() {
     });
 
     if (res.ok) {
-      router.push('/home'); // Adjust the redirection URL as needed
+     let data =await res.json()
+     Cookies.set("access_token", data.accessToken, { expires: 1 }); 
+     router.push('/home');
     } else {
       const errorData = await res.json();
       setError(errorData.error || 'Something went wrong');

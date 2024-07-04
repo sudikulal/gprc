@@ -2,6 +2,8 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Cookies from 'js-cookie';
+
 
 export default function SignUp() {
   const [identifier, setIdentifier] = useState<string>('');
@@ -23,12 +25,12 @@ export default function SignUp() {
       return;
     }
 
-    let payload:{registerType?:number,password:string,userName?:string,emailId?:string} = {password}
+    let payload: { registerType?: number, password: string, userName?: string, emailId?: string } = { password }
 
-    if(isEmail(identifier)){
+    if (isEmail(identifier)) {
       payload.registerType = 1
       payload.emailId = identifier
-    }else{
+    } else {
       payload.registerType = 2
       payload.userName = identifier
     }
@@ -43,6 +45,8 @@ export default function SignUp() {
     });
 
     if (res.ok) {
+      let data = await res.json()
+      Cookies.set("access_token", data.accessToken, { expires: 1 });
       router.push('/home');
     } else {
       const errorData = await res.json();
