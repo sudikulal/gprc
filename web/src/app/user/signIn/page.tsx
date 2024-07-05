@@ -40,7 +40,7 @@ export default function SignIn() {
     if (res.ok) {
      let data =await res.json()
      Cookies.set("access_token", data.accessToken, { expires: 1 }); 
-     router.push('/home');
+     router.push('/');
     } else {
       const errorData = await res.json();
       setError(errorData.error || 'Something went wrong');
@@ -82,7 +82,7 @@ export default function SignIn() {
           </div>
         </form>
         <p className="text-center">
-          Don't have an account? <a href="/user/signup" className="text-primary">Sign Up</a>
+          Don't have an account? <a href="/user/signUp" className="text-primary">Sign Up</a>
         </p>
       </div>
     </div>

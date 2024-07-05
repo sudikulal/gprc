@@ -47,7 +47,7 @@ export default function SignUp() {
     if (res.ok) {
       let data = await res.json()
       Cookies.set("access_token", data.accessToken, { expires: 1 });
-      router.push('/home');
+      router.push('/');
     } else {
       const errorData = await res.json();
       setError(errorData.error || 'Something went wrong');
