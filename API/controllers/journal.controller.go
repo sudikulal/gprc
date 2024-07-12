@@ -54,7 +54,7 @@ func GetJournalsList(c *gin.Context) {
 		journalList = append(journalList, journal)
 	}
 
-	c.JSON(http.StatusOK, gin.H{"journalList": journalList})
+	c.JSON(http.StatusOK, journalList)
 }
 
 func GetJournalsDetail(c *gin.Context) {
@@ -91,7 +91,7 @@ func GetJournalsDetail(c *gin.Context) {
 
 	journal.Content = decryptedData
 
-	c.JSON(http.StatusOK, gin.H{"journalDetail": journal})
+	c.JSON(http.StatusOK,journal)
 }
 
 func CreateJournal(c *gin.Context) {
@@ -151,7 +151,7 @@ func CreateJournal(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK,result)
+	c.JSON(http.StatusOK, result)
 }
 
 func UpdateJournal(c *gin.Context) {
@@ -179,7 +179,7 @@ func UpdateJournal(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"message": "update failed"})
 	}
 
-	c.JSON(http.StatusOK, gin.H{"result": result})
+	c.JSON(http.StatusOK,result)
 }
 
 func DeleteJournal(c *gin.Context) {
@@ -197,5 +197,5 @@ func DeleteJournal(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"message": "delete failed"})
 	}
 
-	c.JSON(http.StatusOK, gin.H{"result": result})
+	c.JSON(http.StatusOK, result)
 }

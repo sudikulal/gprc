@@ -43,9 +43,8 @@ func GetFoldersList(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"journalList": folderList})
+	c.JSON(http.StatusOK, folderList)
 }
-
 
 func CreateFolder(c *gin.Context) {
 	userObj, err := utils.GetUserFromContext(c)
@@ -62,7 +61,7 @@ func CreateFolder(c *gin.Context) {
 	}
 
 	if folder.FolderName == "" {
-		c.JSON(http.StatusOK, gin.H{"message": "folder name is empty"})
+		c.JSON(http.StatusNotFound, gin.H{"message": "folder name is empty"})
 		return
 	}
 
@@ -105,7 +104,7 @@ func UpdateFolder(c *gin.Context) {
 	c.ShouldBind(&folder)
 
 	if folder.FolderName == "" {
-		c.JSON(http.StatusOK, gin.H{"message": "folder name is empty"})
+		c.JSON(http.StatusNotFound, gin.H{"message": "folder name is empty"})
 		return
 	}
 
@@ -116,7 +115,7 @@ func UpdateFolder(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"result": result})
+	c.JSON(http.StatusOK, result)
 
 }
 
@@ -135,5 +134,5 @@ func DeleteFolder(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"message": "delete failed"})
 	}
 
-	c.JSON(http.StatusOK, gin.H{"result": result})
+	c.JSON(http.StatusOK, result)
 }
