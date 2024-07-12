@@ -2,6 +2,9 @@
 
 import Link from 'next/link';
 import { useState, ChangeEvent, FormEvent } from 'react';
+import { usePathname } from 'next/navigation';
+
+
 
 const Navbar = () => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -14,9 +17,14 @@ const Navbar = () => {
     e.preventDefault();
     console.log('Searching for:', searchQuery);
   };
+  const pathName:string = usePathname();
+
+  const hiddenNavbarPaths = ['/user/signIn', '/user/signUp'];
+
+  const shouldShowNavbar = !hiddenNavbarPaths.includes(pathName);
 
   return (
-    <div className="navbar bg-base-100 shadow-lg">
+    shouldShowNavbar ? <div className="navbar bg-base-100 shadow-lg">
       <div className="flex-1">
         <Link href="/" className="btn btn-ghost normal-case text-xl">GPRC</Link>
       </div>
@@ -42,6 +50,7 @@ const Navbar = () => {
         <Link href="/user/logout" className="btn btn-ghost normal-case">Logout</Link>
       </div>
     </div>
+    : <></>
   );
 };
 
