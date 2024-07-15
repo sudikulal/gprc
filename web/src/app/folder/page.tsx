@@ -1,63 +1,45 @@
-"use client"
-import React from 'react';
+import React from "react";
+import { cookies } from "next/headers";
+import FolderComponent from "@/components/folder";
 
-interface Props {
-  accessToken: string;
-  response:any
-}
 
-const Page: React.FC<Props> = ({ accessToken, response }) => {
-  if (response.error || response.message) {
-    return <p>Error: {response}</p>;
-  }
-
-  return (
-    <ul className="menu bg-base-200 rounded-box w-56">
-      {response.map((folder:{folderName:string}, i:number) => (
-        <li key={i}>
-          <a>{folder.folderName}</a>
-        </li>
-      ))}
-    </ul>
-  );
+type Folder = {
+  folderName: string;
+  folderId: string;
 };
 
-export async function getServerSideProps(context: any) {
-  const { accessToken } = context.query;
+export default async function Folder() {
+  const cookieStore = cookies();
+  const accessToken = cookieStore.get("access_token")?.value;
 
-  try {
-    const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
-    const res = await fetch(`${apiBaseUrl}/user/login`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        access_token: accessToken,
-      }),
-    });
-
-    if (!res.ok) {
-      throw new Error('Failed to fetch data');
-    }
-
-    const response = await res.json();
-
-    return {
-      props: {
-        accessToken: accessToken || '',
-        response,
-      },
-    };
-  } catch (error) {
-    return {
-      props: {
-        accessToken: accessToken || '',
-        folders: [],
-        error: error || 'Failed to fetch data',
-      },
-    };
+  if (!accessToken) {
+    throw new Error("Access token is missing");
   }
+
+  const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL;
+
+  if (!apiBaseUrl) {
+    throw new Error("API base URL is not defined");
+  }
+
+  const response = await fetch(`${apiBaseUrl}/folders/`, {
+    method:"GET",
+    headers: {
+      "Content-Type": "application/json",
+      access_token: accessToken,
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error("Failed to fetch data");
+  }
+
+  let folders: Folder[] = await response.json() || []
+
+
+  return <FolderComponent folders={folders} />;
+  
 }
 
-export default Page;
+
+

@@ -8,8 +8,5 @@ export default function Home() {
   if (!accessToken)
     router.push('/user/signIn');
   else
-    router.push({
-      pathname: "/folder",
-      query: { accessToken: accessToken }
-    });
+    router.push("/folder");
 }
