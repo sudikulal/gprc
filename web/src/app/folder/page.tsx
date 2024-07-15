@@ -1,6 +1,6 @@
 import React from "react";
 import { cookies } from "next/headers";
-import FolderComponent from "@/components/folder";
+import FolderComponent from "@/components/folderList";
 
 
 type Folder = {
@@ -38,7 +38,6 @@ export default async function Folder() {
 
 
   return <FolderComponent folders={folders} />;
-  
 }
 
 
