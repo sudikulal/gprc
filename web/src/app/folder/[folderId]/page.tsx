@@ -1,6 +1,6 @@
 // app/[userId]/page.tsx
 import React from 'react';
-import JournalList from "@/components/journalList"
+import {JournalList} from "@/components/journalList"
 import { cookies } from "next/headers";
 
 
@@ -9,7 +9,8 @@ type Journal = {
   "userId": string,
   "folderId": string,
   "title": string,
-  "createdAt": string
+  "createdAt": string,
+  "dayRating":number
 }
 
 
