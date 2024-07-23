@@ -30,7 +30,7 @@ export const JournalList = ({
     >
       {journalList.map((item, idx) => (
         <Link
-        href={`journal/${item.journalId}`}
+        href={`/journal/${item.journalId}`}
           key={item.journalId}
           className="relative group  block p-2 h-full w-full"
           onMouseEnter={() => setHoveredIndex(idx)}
