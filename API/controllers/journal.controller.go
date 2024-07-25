@@ -91,7 +91,7 @@ func GetJournalsDetail(c *gin.Context) {
 
 	journal.Content = decryptedData
 
-	c.JSON(http.StatusOK,journal)
+	c.JSON(http.StatusOK, journal)
 }
 
 func CreateJournal(c *gin.Context) {
@@ -104,7 +104,7 @@ func CreateJournal(c *gin.Context) {
 	}
 
 	if err := c.ShouldBind(&journalData); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"message": err.Error()})
 		return
 	}
 
@@ -123,7 +123,7 @@ func CreateJournal(c *gin.Context) {
 		}
 
 		if err := models.FolderModel.FindOne(c, bson.M{"_id": folderID}).Decode(&folderData); err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			c.JSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
 			return
 		}
 
@@ -147,7 +147,7 @@ func CreateJournal(c *gin.Context) {
 	result, err := models.JournalModel.InsertOne(c, journalData)
 
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
 		return
 	}
 
@@ -179,7 +179,7 @@ func UpdateJournal(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"message": "update failed"})
 	}
 
-	c.JSON(http.StatusOK,result)
+	c.JSON(http.StatusOK, result)
 }
 
 func DeleteJournal(c *gin.Context) {

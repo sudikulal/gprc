@@ -56,7 +56,7 @@ func CreateFolder(c *gin.Context) {
 	var folder models.FolderSchema
 
 	if err := c.ShouldBind(&folder); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"message": err.Error()})
 		return
 	}
 
@@ -72,7 +72,7 @@ func CreateFolder(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"message": "Folder already exists"})
 		return
 	} else if err != mongo.ErrNoDocuments {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
 		return
 	}
 
@@ -81,7 +81,7 @@ func CreateFolder(c *gin.Context) {
 	createFolder, err := models.FolderModel.InsertOne(c, folder)
 
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
 		return
 	}
 

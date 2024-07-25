@@ -18,7 +18,7 @@ func UserRegister(c *gin.Context) {
 	var user models.UserSchema
 
 	if err := c.ShouldBind(&user); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"message": err.Error()})
 		return
 	}
 
@@ -45,21 +45,21 @@ func UserRegister(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"message": "User already exists"})
 		return
 	} else if err != mongo.ErrNoDocuments {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
 		return
 	}
 
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Password encryption failed"})
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "Password encryption failed"})
 		return
 	}
 	user.Password = string(hashedPassword)
 	user.CreatedAt = time.Now()
-	
+
 	createUser, err := models.UserModel.InsertOne(c, user)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
 		return
 	}
 
@@ -71,7 +71,7 @@ func UserRegister(c *gin.Context) {
 
 	token, err := utils.CreateJwtToken(userObj, nil)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
 		return
 	}
 
@@ -85,7 +85,7 @@ func UserRegister(c *gin.Context) {
 func UserLogin(c *gin.Context) {
 	var user models.UserSchema
 	if err := c.ShouldBind(&user); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, gin.H{"message": err.Error()})
 		return
 	}
 
@@ -109,15 +109,15 @@ func UserLogin(c *gin.Context) {
 
 	var foundUser models.UserSchema
 	if err := models.UserModel.FindOne(c, filter).Decode(&foundUser); err == mongo.ErrNoDocuments {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid email or password"})
+		c.JSON(http.StatusUnauthorized, gin.H{"message": "Invalid email or password"})
 		return
 	} else if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
 		return
 	}
 
 	if err := bcrypt.CompareHashAndPassword([]byte(foundUser.Password), []byte(password)); err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid email or password"})
+		c.JSON(http.StatusUnauthorized, gin.H{"message": "Invalid email or password"})
 		return
 	}
 
@@ -129,7 +129,7 @@ func UserLogin(c *gin.Context) {
 
 	token, err := utils.CreateJwtToken(userObj, nil)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"message": err.Error()})
 		return
 	}
 
