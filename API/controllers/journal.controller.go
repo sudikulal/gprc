@@ -155,10 +155,10 @@ func CreateJournal(c *gin.Context) {
 }
 
 func UpdateJournal(c *gin.Context) {
-	userId, err := primitive.ObjectIDFromHex(c.GetHeader("userId"))
+	userObj, err := utils.GetUserFromContext(c)
 
-	if userId == primitive.NilObjectID || err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"message": "invalid user"})
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"message": err.Error()})
 		return
 	}
 
@@ -173,7 +173,7 @@ func UpdateJournal(c *gin.Context) {
 
 	c.ShouldBind(&journal)
 
-	result, err := models.FolderModel.UpdateOne(c, bson.M{"_id": journalId, "user_id": userId}, journal)
+	result, err := models.FolderModel.UpdateOne(c, bson.M{"_id": journalId, "user_id": userObj.UserId}, journal)
 
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"message": "update failed"})
@@ -183,15 +183,16 @@ func UpdateJournal(c *gin.Context) {
 }
 
 func DeleteJournal(c *gin.Context) {
-	userId := c.GetHeader("userId")
-	if userId == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"message": "invalid user"})
+	userObj, err := utils.GetUserFromContext(c)
+
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"message": err.Error()})
 		return
 	}
 
 	journalId := c.Param("id")
 
-	result, err := models.FolderModel.DeleteOne(c, bson.M{"_id": journalId, "user_id": userId})
+	result, err := models.FolderModel.DeleteOne(c, bson.M{"_id": journalId, "user_id": userObj.UserId})
 
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"message": "delete failed"})
