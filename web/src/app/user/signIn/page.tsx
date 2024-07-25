@@ -43,7 +43,7 @@ export default function SignIn() {
      router.push('/');
     } else {
       const errorData = await res.json();
-      setError(errorData.error || 'Something went wrong');
+      setError(errorData.message || 'Something went wrong');
     }
   };
 

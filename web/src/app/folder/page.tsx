@@ -30,11 +30,13 @@ export default async function Folder() {
     },
   });
 
-  if (!response.ok) {
-    throw new Error("Failed to fetch data");
+  const responseData = await response.json()
+
+  if (!response.ok || responseData.message) {
+    throw new Error(responseData.message || "Failed to fetch data");
   }
 
-  let folders: Folder[] = await response.json() || []
+  let folders: Folder[] = responseData || []
 
 
   return <FolderComponent folders={folders} />;
