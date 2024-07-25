@@ -162,12 +162,7 @@ func UpdateJournal(c *gin.Context) {
 		return
 	}
 
-	journalId, err := primitive.ObjectIDFromHex(c.Param("id"))
-
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"err": err.Error()})
-		return
-	}
+	journalId := utils.GetIdFromParam(c)
 
 	var journal *models.JournalSchema
 
