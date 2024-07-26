@@ -12,9 +12,10 @@ import (
 )
 
 type TodoSchema struct {
-	ID        primitive.ObjectID `bson:"_id,omitempty" json:"journalId,omitempty"`
-	UserID    primitive.ObjectID `bson:"user_id" json:"userId"`
-	Title     string             `bson:"title" json:"title"`
+	ID        primitive.ObjectID `bson:"_id,omitempty" json:"todoId,omitempty"`
+	UserID    primitive.ObjectID `bson:"user_id" json:"userId" form:"userId"`
+	Title     string             `bson:"title" json:"title" form:"title"`
+	Status 	  int				 `bson:"status" json:"status" form:"status"`
 	CreatedAt time.Time          `bson:"created_at" json:"createdAt"`
 }
 

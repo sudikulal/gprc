@@ -24,6 +24,7 @@ func main() {
     routes.UserRoutes(router)
     routes.JournalRoutes(router)
     routes.FolderRoutes(router)
+    routes.TodoRoutes(router)
 
     router.Run(":3232")
 }

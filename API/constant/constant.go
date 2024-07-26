@@ -5,3 +5,8 @@ var DAYRATING = map[string]int {
   "BAD" : 2,
 }
 
+var STATUS = map[string]int {
+  "ACTIVE" : 1,
+  "COMPLETED" : 2,
+  "DELETED":3,
+}
