@@ -1,0 +1,19 @@
+version: '3'
+services:
+  api:
+    build:
+      context: ./API
+      dockerfile: Dockerfile
+    ports:
+      - "3232:3232"
+    container_name: go_api
+
+  web:
+    build:
+      context: ./web
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    container_name: nextjs_web
+    depends_on:
+      - api
